@@ -1,5 +1,7 @@
 import sys
 import os
+import struct
+import binascii
 if __name__=='__main__':
     cur_path = sys.path[0]
     sys.path.insert(0, os.path.join(cur_path, '..', '..'))                     # openvisualizer/
@@ -38,7 +40,7 @@ class MoteStateCli(OpenCli):
                              self._handlerState)
         self.registerCommand('reserve',
 		                       'r',
-							        'reserve cells (usage: r  mote_addr neighbor_addr num_of_links start_at_asn [example: r e6 eb 2 )',
+							        'reserve cells (usage: r  mote_addr neighbor_addr num_of_links start_at_asn [example: r e6 eb 2 10032)',
 							        ['mote_addr','neighbor_addr','num_of_links','start_at_asn'],
                              self._handlerRes)
 							
@@ -68,7 +70,10 @@ class MoteStateCli(OpenCli):
                 myid = str(ms.getStateElem("IdManager").data[0]['my16bID'])
                 myid=myid[3:5]
                 if myid==params[0]:#match the ID and then send command to mote
-                   input = 'Q' + ' ' + params[1]+' '+params[2]+' '+params[3] #Q is the code for reQuesting reservation in openserial_stop() on Gina
+                   print(params)
+                   aux  = str(int(params[1],16))+str(int(params[2]))+str(int(params[3]))
+                   input = 'Q'+str(aux)
+                   print(input)
                    ms.moteConnector.write(input)
                    #print input
             except ValueError as err:
