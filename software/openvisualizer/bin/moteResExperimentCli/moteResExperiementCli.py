@@ -6,6 +6,14 @@ if __name__=='__main__':
     cur_path = sys.path[0]
     sys.path.insert(0, os.path.join(cur_path, '..', '..'))                     # openvisualizer/
     sys.path.insert(0, os.path.join(cur_path, '..', '..', '..', 'openCli'))    # openCli/
+    
+import logging 
+class NullHandler(logging.Handler): 
+    def emit(self, record): 
+        pass 
+log = logging.getLogger('MoteStateCli') 
+log.setLevel(logging.DEBUG) 
+log.addHandler(NullHandler()) 
 
 from moteProbe     import moteProbe
 from moteConnector import moteConnector
@@ -39,9 +47,9 @@ class MoteStateCli(OpenCli):
                              ['state parameter'],
                              self._handlerState)
         self.registerCommand('reserve',
-		                       'r',
-							        'reserve cells (usage: r  mote_addr neighbor_addr num_of_links start_at_asn [example: r e6 eb 2 10032)',
-							        ['mote_addr','neighbor_addr','num_of_links','start_at_asn'],
+                             'r',
+                             'reserve cells; e.g. "r e6 eb 2 10032"',
+                             ['mote_addr','neighbor_addr','num_of_links','start_at_asn'],
                              self._handlerRes)
 							
 	#======================== public ==========================================
@@ -71,11 +79,8 @@ class MoteStateCli(OpenCli):
                 myid=myid[3:5]
                 if myid==params[0]:#match the ID and then send command to mote
                    print(params)
-                   aux  = struct.pack('<BBH',(int(params[1],16)),(int(params[2])),(int(params[3])))
-                   input = 'Q'+aux
-                   print(input)
-                   ms.moteConnector.write(input)
-                   #print input
+                   input  = struct.pack('<BBH',(int(params[1],16)),(int(params[2])),(int(params[3])))
+                   ms.moteConnector.write(input,headerByte='Q') 
             except ValueError as err:
                 print err
     
