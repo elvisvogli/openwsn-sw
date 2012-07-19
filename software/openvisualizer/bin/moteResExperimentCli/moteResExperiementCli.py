@@ -71,8 +71,8 @@ class MoteStateCli(OpenCli):
                 myid=myid[3:5]
                 if myid==params[0]:#match the ID and then send command to mote
                    print(params)
-                   aux  = str(int(params[1],16))+str(int(params[2]))+str(int(params[3]))
-                   input = 'Q'+str(aux)
+                   aux  = struct.pack('<BBH',(int(params[1],16)),(int(params[2])),(int(params[3])))
+                   input = 'Q'+aux
                    print(input)
                    ms.moteConnector.write(input)
                    #print input
