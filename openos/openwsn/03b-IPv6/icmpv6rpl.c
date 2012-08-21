@@ -300,12 +300,12 @@ void sendDIO() {
           packetfunctions_reserveHeaderSize(msg,sizeof(icmpv6rpl_dio_options_t));
           memcpy(((icmpv6rpl_dio_options_t*)(msg->payload)),&(icmpv6rpl_dio_options),sizeof(icmpv6rpl_dio_options));
           
-          //Here I'm changing the version number to distinguish between the DIO with option and without, however in the future this has to be changed
+          //Here I'm changing the option field to distinguish between the DIO with option and without.
           icmpv6rpl_dio.options      = 0x03;
           
         }
   
-  //================ Above to be removed if the whole struct. worked ========//      
+  //================ ==================================== ============//      
         
          test2=0xcc;
         packetfunctions_reserveHeaderSize(msg,sizeof(test2));
@@ -362,6 +362,10 @@ void sendDIO() {
            icmpv6rpl_vars.busySending = FALSE;
            openqueue_freePacketBuffer(msg);
         }
+        else
+        {
+         icmpv6rpl_vars.busySending = FALSE; 
+        }
      }
    }
 }
@@ -369,7 +373,7 @@ void sendDIO() {
 void sendDAO() {
   
   //uint8_t test3;
-  //open_addr_t* temp_prefix64btoWrite_parent;
+  //open_addr_t* temp_prefix64btoWrite;
   uint8_t* temp_prefix64btoWrite_parent;
   uint8_t i,j;
   OpenQueueEntry_t* msg;
@@ -392,8 +396,8 @@ void sendDAO() {
       msg->l4_sourcePortORicmpv6Type             = IANA_ICMPv6_RPL;
       //l3
       //=============To send it to my Parent ==========//
-     // neighbors_getPreferredParent(temp_prefix64btoWrite,ADDR_64B);
-     // memcpy(&(msg->l3_destinationORsource),temp_prefix64btoWrite,sizeof(open_addr_t));
+      //neighbors_getPreferredParent(temp_prefix64btoWrite,ADDR_64B);
+      //memcpy(&(msg->l3_destinationORsource),temp_prefix64btoWrite,sizeof(open_addr_t));
       
      //========== For multicast ======//
       memcpy(&(msg->l3_destinationORsource),&icmpv6rpl_vars.all_routers_multicast,sizeof(open_addr_t));
@@ -490,6 +494,10 @@ void sendDAO() {
       if (icmpv6_send(msg)!=E_SUCCESS) {
          icmpv6rpl_vars.busySending = FALSE;
          openqueue_freePacketBuffer(msg);
+      }
+      else
+      {
+         icmpv6rpl_vars.busySending = FALSE;
       }
       
 }
