@@ -2328,15 +2328,6 @@
         </file>
       </group>
       <group>
-        <name>test</name>
-        <file>
-          <name>$PROJ_DIR$\..\..\..\openwsn\07-App\test\test.c</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\..\..\openwsn\07-App\test\test.h</name>
-        </file>
-      </group>
-      <group>
         <name>udpecho</name>
         <file>
           <name>$PROJ_DIR$\..\..\..\openwsn\07-App\udpecho\udpecho.c</name>
