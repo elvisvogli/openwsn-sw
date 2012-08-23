@@ -64,8 +64,6 @@ typedef struct {
    PORT_SIGNED_INT_WIDTH            minCorrection;        // minimum time correction
    PORT_SIGNED_INT_WIDTH            maxCorrection;        // maximum time correction
    uint8_t            numDeSync;            // number of times a desync happened
-   PORT_SIGNED_INT_WIDTH   correction[10];
-   uint8_t num_sync;
 } ieee154e_stats_t;
 PRAGMA(pack());
 
@@ -1613,10 +1611,7 @@ port_INLINE void resetStats() {
 }
 
 void updateStats(PORT_SIGNED_INT_WIDTH timeCorrection) {
-    ieee154e_stats.correction[ieee154e_stats.num_sync%10]=timeCorrection;
-    ieee154e_stats.num_sync++;
-    
-    ieee154e_stats.syncCounter++;
+   ieee154e_stats.syncCounter++;
 
    if (timeCorrection<ieee154e_stats.minCorrection) {
      ieee154e_stats.minCorrection = timeCorrection;

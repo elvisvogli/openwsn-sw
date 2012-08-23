@@ -373,7 +373,7 @@ void sendDIO() {
 void sendDAO() {
   
   //uint8_t test3;
-  //open_addr_t* temp_prefix64btoWrite;
+  open_addr_t* temp_prefix64btoWrite;
   uint8_t* temp_prefix64btoWrite_parent;
   uint8_t i,j;
   OpenQueueEntry_t* msg;
@@ -396,11 +396,11 @@ void sendDAO() {
       msg->l4_sourcePortORicmpv6Type             = IANA_ICMPv6_RPL;
       //l3
       //=============To send it to my Parent ==========//
-      //neighbors_getPreferredParent(temp_prefix64btoWrite,ADDR_64B);
+      neighbors_getPreferredParent(&(msg->l3_destinationORsource),ADDR_64B);
       //memcpy(&(msg->l3_destinationORsource),temp_prefix64btoWrite,sizeof(open_addr_t));
       
      //========== For multicast ======//
-      memcpy(&(msg->l3_destinationORsource),&icmpv6rpl_vars.all_routers_multicast,sizeof(open_addr_t));
+      //memcpy(&(msg->l3_destinationORsource),&icmpv6rpl_vars.all_routers_multicast,sizeof(open_addr_t));
    
       //========================
 //        test3=0xDD;
