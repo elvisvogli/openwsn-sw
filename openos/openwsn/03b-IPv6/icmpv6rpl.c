@@ -20,6 +20,9 @@ typedef struct {
    bool            busySending;
    uint16_t        seq;
    opentimer_id_t  timerId;
+   // Flag to check if DODAGID is set
+   uint8_t         DODAGIDFlagSet;
+   
    // for testing
    uint8_t checksize;
    //====== by Ahmad =====//
@@ -58,6 +61,10 @@ void icmpv6rpl_init() {
    icmpv6rpl_dio.verNumb      = 0x11;
    icmpv6rpl_dio.rplinstanceId= 0x22;
    icmpv6rpl_dio.rplOptions   =0x00| MOP_DIO_A | MOP_DIO_B | MOP_DIO_C | PRF_DIO_A | PRF_DIO_B | PRF_DIO_C | G_DIO ;
+   
+   //set flag to zero first
+   icmpv6rpl_vars.DODAGIDFlagSet= 0;
+   // set the default DODAGID
    icmpv6rpl_dio.DODAGID[0]   =0xaa;
    icmpv6rpl_dio.DODAGID[1]   =0xaa;
    icmpv6rpl_dio.DODAGID[2]   =0xbb;
@@ -196,7 +203,22 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
    {
    //update neighbor table
    neighbors_receiveDIO(msg);
-   // check if the DIO option is included so far I'm chaning the version number as temp. sol.
+   // now check the DODAGID and copy it if yet it has not been updated.
+  // if(icmpv6rpl_vars.DODAGIDFlagSet==0)
+  // {
+     icmpv6rpl_vars.DODAGIDFlagSet=1;
+     // copy the DODAGID for DIO and DAO as well
+     // for DIO
+      memcpy(  &(icmpv6rpl_dio.DODAGID[0]),
+                  &(((icmpv6rpl_dio_t*)(msg->payload))->DODAGID[0]),
+                  sizeof(icmpv6rpl_dio.DODAGID));
+      //for DAO
+     memcpy(  &(icmpv6rpl_dao.DODAGID[0]),
+                  &(((icmpv6rpl_dao_t*)(msg->payload))->DODAGID[0]),
+                  sizeof(icmpv6rpl_dao.DODAGID));
+      
+   //}
+   // check if the DIO option is included.
    if(((icmpv6rpl_dio_t*)(msg->payload))->options   == 0x03 )
    {
      if(isPrefixSet()==FALSE)
@@ -264,6 +286,8 @@ void sendDIO() {
   uint8_t test2;
   OpenQueueEntry_t* msg;
    // check if my rank is not the default rank before sending DIO
+  if(idmanager_getIsBridge()==FALSE)
+  {
    if(neighbors_getMyDAGrank() != 0xffff)
    {
      if (icmpv6rpl_vars.busySending==FALSE) {
@@ -307,13 +331,13 @@ void sendDIO() {
   
   //================ ==================================== ============//      
         
-         test2=0xcc;
-        packetfunctions_reserveHeaderSize(msg,sizeof(test2));
-        memcpy(((uint8_t*)(msg->payload)),&(test2),sizeof(test2));
-        
-        test2=0xdd;
-        packetfunctions_reserveHeaderSize(msg,sizeof(test2));
-        memcpy(((uint8_t*)(msg->payload)),&(test2),sizeof(test2));
+//         test2=0xcc;
+//        packetfunctions_reserveHeaderSize(msg,sizeof(test2));
+//        memcpy(((uint8_t*)(msg->payload)),&(test2),sizeof(test2));
+//        
+//        test2=0xdd;
+//        packetfunctions_reserveHeaderSize(msg,sizeof(test2));
+//        memcpy(((uint8_t*)(msg->payload)),&(test2),sizeof(test2));
         
         
        //====================== RESERVING THE WHOLE STRUCTURE (icmpv6rpl_dio_t) ================//
@@ -368,6 +392,7 @@ void sendDIO() {
         }
      }
    }
+  }
 }
 
 void sendDAO() {
@@ -396,9 +421,13 @@ void sendDAO() {
       msg->l4_sourcePortORicmpv6Type             = IANA_ICMPv6_RPL;
       //l3
       //=============To send it to my Parent ==========//
-      neighbors_getPreferredParent(&(msg->l3_destinationORsource),ADDR_64B);
-      //memcpy(&(msg->l3_destinationORsource),temp_prefix64btoWrite,sizeof(open_addr_t));
+      // send it to the DODAGID (to the root), getting the address of DODAGID from DIO filed == one in DAO field.
+      memcpy(&(msg->l3_destinationORsource),&(((icmpv6rpl_dio_t*)(msg->payload))->DODAGID[0]),sizeof(icmpv6rpl_dio.DODAGID));
       
+     
+      //neighbors_getPreferredParent(&(msg->l3_destinationORsource),ADDR_128B);
+      //memcpy(&(msg->l3_destinationORsource),temp_prefix64btoWrite,sizeof(open_addr_t));
+      // do it here copy the DoDAG ID
      //========== For multicast ======//
       //memcpy(&(msg->l3_destinationORsource),&icmpv6rpl_vars.all_routers_multicast,sizeof(open_addr_t));
    
