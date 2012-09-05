@@ -457,7 +457,7 @@ void sendDAO() {
            if((isNeighborsWithLowerDAGrank(neighbors_getMyDAGrank(),i))== TRUE)
            {
              icmpv6rpl_vars.getaddBefore1=msg->payload; //testing
-             packetfunctions_reserveHeaderSize(msg,sizeof(8));
+             packetfunctions_reserveHeaderSize(msg,8);
              getNeighborsWithLowerDAGrank((msg->payload),ADDR_64B,i);    
              icmpv6rpl_vars.getaddAfter=msg->payload;   //testing
              j++;
