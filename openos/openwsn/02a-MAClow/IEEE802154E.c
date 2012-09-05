@@ -1657,7 +1657,8 @@ port_INLINE uint8_t calculateFrequency(uint8_t channelOffset) {
    else
       ieee154e_dbg.chanCtr[temp-11]++;
    //pdu
-   
+   // for testing, I'm having the channel 20 for overair sniffing !
+   temp =20;
    return temp;
 }
 

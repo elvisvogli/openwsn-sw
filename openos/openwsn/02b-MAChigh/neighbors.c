@@ -352,7 +352,7 @@ void getNeighborsWithLowerDAGrank(uint8_t* addressToWrite,uint8_t addr_type, uin
  { 
      switch(addr_type) {
             case ADDR_64B:
-               memcpy(addressToWrite,&(neighbors_vars.neighbors[index].addr_64b.addr_64b),sizeof(8));
+               memcpy(addressToWrite,&(neighbors_vars.neighbors[index].addr_64b.addr_64b),8);
                break;
             default:
                openserial_printError(COMPONENT_NEIGHBORS,ERR_WRONG_ADDR_TYPE,

@@ -10,6 +10,8 @@
 #include "scheduler.h"
 #include "opentimers.h"
 #include "idmanager.h"
+#include "openbridge.h"
+
 
 //=========================== variables =======================================
 
@@ -201,6 +203,8 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
    
    if(codeValue == IANA_ICMPv6_RPL_DIO)
    {
+      if(idmanager_getIsBridge()==FALSE) // check that I'm not a root
+      {
    //update neighbor table
    neighbors_receiveDIO(msg);
    // now check the DODAGID and copy it if yet it has not been updated.
@@ -214,7 +218,7 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
                   sizeof(icmpv6rpl_dio.DODAGID));
       //for DAO
      memcpy(  &(icmpv6rpl_dao.DODAGID[0]),
-                  &(((icmpv6rpl_dao_t*)(msg->payload))->DODAGID[0]),
+                  &(((icmpv6rpl_dio_t*)(msg->payload))->DODAGID[0]),
                   sizeof(icmpv6rpl_dao.DODAGID));
       
    //}
@@ -235,13 +239,13 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
             idmanager_setMyID(&temp_prefix);
          //packetfunctions_tossHeader(msg,sizeof(icmpv6rpl_dio_options_t));
       }
-   }
+     }
+  }
    
    }
    else if(codeValue== IANA_ICMPv6_RPL_DAO)
    {
-   //update neighbor table
-    icmpv6rpl_receiveDAO(msg);
+      // IT shouldn't get DAO because it will be handled in the lower layer.
    }
    else
    {
@@ -396,12 +400,16 @@ void sendDIO() {
 }
 
 void sendDAO() {
-  
   //uint8_t test3;
   open_addr_t* temp_prefix64btoWrite;
   uint8_t* temp_prefix64btoWrite_parent;
   uint8_t i,j;
   OpenQueueEntry_t* msg;
+   if(idmanager_getIsBridge()==FALSE)
+  {
+   if(neighbors_getMyDAGrank() != 0xffff)
+   {
+     
    if (icmpv6rpl_vars.busySending==FALSE) {
       icmpv6rpl_vars.busySending = TRUE;
       msg = openqueue_getFreePacketBuffer(COMPONENT_ICMPv6RPL);
@@ -420,12 +428,17 @@ void sendDAO() {
       msg->l4_protocol                           = IANA_ICMPv6;
       msg->l4_sourcePortORicmpv6Type             = IANA_ICMPv6_RPL;
       //l3
-      //=============To send it to my Parent ==========//
+      //=============To send it to DODAGID ==========//
+      (msg->l3_destinationORsource).type=ADDR_128B;
+       memcpy(&((msg->l3_destinationORsource).addr_128b[0]),&(icmpv6rpl_dio.DODAGID[0]),sizeof(icmpv6rpl_dio.DODAGID));
+     
+      
       // send it to the DODAGID (to the root), getting the address of DODAGID from DIO filed == one in DAO field.
-      memcpy(&(msg->l3_destinationORsource),&(((icmpv6rpl_dio_t*)(msg->payload))->DODAGID[0]),sizeof(icmpv6rpl_dio.DODAGID));
+     // memcpy(&(msg->l3_destinationORsource),&(((icmpv6rpl_dio_t*)(msg->payload))->DODAGID[0]),sizeof(icmpv6rpl_dio.DODAGID));
+      // memcpy(&(msg->l3_destinationORsource->addr_128),&(icmpv6rpl_dio.DODAGID),sizeof(icmpv6rpl_dio.DODAGID));
       
      
-      //neighbors_getPreferredParent(&(msg->l3_destinationORsource),ADDR_128B);
+     // neighbors_getPreferredParent(&(msg->l3_destinationORsource),ADDR_128B);
       //memcpy(&(msg->l3_destinationORsource),temp_prefix64btoWrite,sizeof(open_addr_t));
       // do it here copy the DoDAG ID
      //========== For multicast ======//
@@ -435,7 +448,9 @@ void sendDAO() {
 //        test3=0xDD;
 //      packetfunctions_reserveHeaderSize(msg,sizeof(test3));
 //      memcpy(((uint8_t*)(msg->payload)),&(test3),sizeof(test3));
-//      
+//   
+     //==================================================================================================//   
+     //==================================================================================================//  
       //======================= Reserve for the Transite option ============//
       j=0;
       for (i=0;i<MAXNUMNEIGHBORS;i++) {
@@ -465,10 +480,8 @@ void sendDAO() {
       icmpv6rpl_dao.options      =0x06;    // indicate that in DAO the transit frame will be appended to the main DAO frame.
       }
       
-//      packetfunctions_reserveHeaderSize(msg,sizeof(icmpv6rpl_dao_transit_info_t));
-//      memcpy(((icmpv6rpl_dao_transit_info_t*)(msg->payload)),&(icmpv6rpl_dao_transit_info),sizeof(icmpv6rpl_dao_transit_info));
-      
-      
+      //==================================================================================================//  
+      //==============================================================================================//
       //======================= Reserve for the RPL Target option ============//
 //      j=0;
 //      for (i=0;i<MAXNUMNEIGHBORS;i++) {
@@ -529,7 +542,10 @@ void sendDAO() {
          icmpv6rpl_vars.busySending = FALSE;
       }
       
-}
+    }
+   }
+  }
+   
 
 }
 
