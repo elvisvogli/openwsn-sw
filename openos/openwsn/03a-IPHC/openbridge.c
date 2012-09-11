@@ -56,7 +56,21 @@ void openbridge_sendDone(OpenQueueEntry_t* msg, error_t error) {
 }
 
 void openbridge_receive(OpenQueueEntry_t* msg) {
-   openserial_printData((uint8_t*)(msg->payload),msg->length);
+  //XV sending src and dest.
+   uint8_t total;
+   uint8_t size=sizeof(msg->l2_nextORpreviousHop.addr_64b);
+   total=size;
+   packetfunctions_reserveHeaderSize(msg,size);
+   memcpy(msg->payload,msg->l2_nextORpreviousHop.addr_64b,size);
+   
+   size=sizeof(idmanager_getMyID(ADDR_64B)->addr_64b);
+   total+=size;
+   packetfunctions_reserveHeaderSize(msg,size);
+
+   memcpy(msg->payload,idmanager_getMyID(ADDR_64B)->addr_64b,size);
+  
+  
+   openserial_printData((uint8_t*)(msg->payload),msg->length +total);
    openqueue_freePacketBuffer(msg);
 }
 

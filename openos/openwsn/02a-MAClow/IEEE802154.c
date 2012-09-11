@@ -28,11 +28,11 @@ void ieee802154_prependHeader(OpenQueueEntry_t* msg,
       *((uint8_t*)(msg->payload)) = 0xFF;
    } else {
       // poipoi: using 16-bit destination address
-      packetfunctions_reserveHeaderSize(msg,sizeof(uint8_t));
+      /*packetfunctions_reserveHeaderSize(msg,sizeof(uint8_t));
       *((uint8_t*)(msg->payload)) = nextHop->addr_64b[6];
       packetfunctions_reserveHeaderSize(msg,sizeof(uint8_t));
-      *((uint8_t*)(msg->payload)) = nextHop->addr_64b[7];
-      /*
+      *((uint8_t*)(msg->payload)) = nextHop->addr_64b[7];*/
+      
       switch (nextHop->type) {
          case ADDR_16B:
          case ADDR_64B:
@@ -43,7 +43,7 @@ void ieee802154_prependHeader(OpenQueueEntry_t* msg,
                                   (errorparameter_t)nextHop->type,
                                   (errorparameter_t)1);
       }
-      */
+      
    }
    //destpan
    packetfunctions_writeAddress(msg,idmanager_getMyID(ADDR_PANID),LITTLE_ENDIAN);
