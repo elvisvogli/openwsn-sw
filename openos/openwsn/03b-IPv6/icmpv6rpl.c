@@ -429,8 +429,14 @@ void sendDAO() {
       msg->l4_sourcePortORicmpv6Type             = IANA_ICMPv6_RPL;
       //l3
       //=============To send it to DODAGID ==========//
+      
       (msg->l3_destinationORsource).type=ADDR_128B;
-       memcpy(&((msg->l3_destinationORsource).addr_128b[0]),&(icmpv6rpl_dio.DODAGID[0]),sizeof(icmpv6rpl_dio.DODAGID));
+
+      for (i=0;i<sizeof(icmpv6rpl_dio.DODAGID);i++) {
+        msg->l3_destinationORsource.addr_128b[i] =icmpv6rpl_dio.DODAGID[sizeof(icmpv6rpl_dio.DODAGID)-1-i];
+      }
+      //this is not correct!! the address is little endian and the dodagid is big endian.. reverse it.
+      // memcpy(&((msg->l3_destinationORsource).addr_128b[0]),&(icmpv6rpl_dio.DODAGID[0]),sizeof(icmpv6rpl_dio.DODAGID));
      
       
       // send it to the DODAGID (to the root), getting the address of DODAGID from DIO filed == one in DAO field.
