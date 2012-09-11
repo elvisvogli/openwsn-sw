@@ -16,6 +16,7 @@
 
 void    getNextHop(open_addr_t* destination, open_addr_t* addressToWrite);
 error_t fowarding_send_internal(OpenQueueEntry_t *msg);
+error_t fowarding_send_internal_SourceRouting(OpenQueueEntry_t *msg, ipv6_header_iht ipv6_header);
 
 //=========================== public ==========================================
 
@@ -78,9 +79,19 @@ void forwarding_receive(OpenQueueEntry_t* msg, ipv6_header_iht ipv6_header) {
       //TBC: source address gets changed!
       // change the creator to this components (should have been MAC)
       msg->creator = COMPONENT_FORWARDING;
-      // resend as if from upper layer
-      if (fowarding_send_internal(msg)==E_FAIL) {
-         openqueue_freePacketBuffer(msg);
+      if(ipv6_header.next_header !=SourceFWNxtHdr) // no numbers define it >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> NEED TO DEFINE (define SourceFWNxtHdr)
+      {
+          // resend as if from upper layer
+          if (fowarding_send_internal(msg)==E_FAIL) {
+             openqueue_freePacketBuffer(msg);
+          }
+      }
+      else
+      {
+        // source route
+         if (fowarding_send_internal_SourceRouting(msg, ipv6_header)==E_FAIL) {
+             openqueue_freePacketBuffer(msg);
+          }
       }
    }
 }
@@ -89,6 +100,155 @@ void forwarding_receive(OpenQueueEntry_t* msg, ipv6_header_iht ipv6_header) {
 
 error_t fowarding_send_internal(OpenQueueEntry_t *msg) {
    getNextHop(&(msg->l3_destinationORsource),&(msg->l2_nextORpreviousHop));
+   if (msg->l2_nextORpreviousHop.type==ADDR_NONE) {
+      openserial_printError(COMPONENT_FORWARDING,ERR_NO_NEXTHOP,
+                            (errorparameter_t)0,
+                            (errorparameter_t)0);
+      return E_FAIL;
+   }
+   return iphc_sendFromForwarding(msg);
+}
+
+error_t fowarding_send_internal_SourceRouting(OpenQueueEntry_t *msg, ipv6_header_iht ipv6_header) {
+  // It has to be forwarded to dest. so, next hop should be extracted from the message.
+  uint8_t local_CmprE;
+  uint8_t local_CmprI;
+  uint8_t j;
+  uint8_t loopLimit;
+  uint8_t* runningPointer;
+  uint8_t foundFlag;
+  uint8_t octetsAddressSize;
+  runningPointer=(msg->payload);
+  
+//  ipv6_Source_Routing_Header_t ipv6_Source_Routing_Header;
+//  ipv6_Source_Routing_Header.nextHeader=(((ipv6_Source_Routing_Header_t*)(msg->payload))->nextHeader);
+//  ipv6_Source_Routing_Header.HdrExtLen=(((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen);
+//  ipv6_Source_Routing_Header.RoutingType=(((ipv6_Source_Routing_Header_t*)(msg->payload))->RoutingType);
+//  ipv6_Source_Routing_Header.SegmentsLeft=(((ipv6_Source_Routing_Header_t*)(msg->payload))->SegmentsLeft); // to be decremented each time u forward
+//  ipv6_Source_Routing_Header.CmprICmprE=(((ipv6_Source_Routing_Header_t*)(msg->payload))->CmprICmprE);
+//  ipv6_Source_Routing_Header.PadRes=(((ipv6_Source_Routing_Header_t*)(msg->payload))->PadRes);
+//  ipv6_Source_Routing_Header.Reserved=(((ipv6_Source_Routing_Header_t*)(msg->payload))->Reserved);
+ 
+  
+  // getting local_CmprE and CmprI;
+  local_CmprE= ((((ipv6_Source_Routing_Header_t*)(msg->payload))->CmprICmprE) & 0xf);
+  local_CmprI=((((ipv6_Source_Routing_Header_t*)(msg->payload))->CmprICmprE) & 0xf0);
+  local_CmprI>>4; // shifting it by 4.
+  foundFlag=0;
+  
+  runningPointer+=sizeof(ipv6_Source_Routing_Header_t);
+  
+  // tossing the header 
+ // packetfunctions_tossHeader(msg,sizeof(ipv6_Source_Routing_Header_t));
+  if(local_CmprI !=0)
+  {
+    if(local_CmprI==2)
+    {
+      octetsAddressSize=2;
+       msg->l2_nextORpreviousHop.type = ADDR_16B;
+       if(local_CmprE==0)
+            {
+              loopLimit= (((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-8;
+            }
+       else if(local_CmprE==2)
+             {
+               loopLimit= (((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-1;
+             }
+       else if(local_CmprE==8)
+            {
+              loopLimit= (((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-4;
+            }
+       else
+           {
+             // compiler shouldn't access this !
+             msg->l2_nextORpreviousHop.type = ADDR_NONE;
+           }
+            
+    }
+    else if(local_CmprI==8)
+    {
+      octetsAddressSize=8;
+      msg->l2_nextORpreviousHop.type = ADDR_64B;
+           if(local_CmprE==0)
+            {
+              loopLimit= (((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-2;
+            }
+           else if(local_CmprE==8)
+            {
+              loopLimit= (((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-1;
+            }
+           else
+           {
+             // compiler shouldn't access this !
+             msg->l2_nextORpreviousHop.type = ADDR_NONE;
+           }
+           
+    }
+    else if(local_CmprI==0)
+    {
+      octetsAddressSize=16;
+      msg->l2_nextORpreviousHop.type = ADDR_128B;
+      loopLimit= (((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-1;
+    }
+    else
+    {
+       // compiler shouldn't access this !
+        msg->l2_nextORpreviousHop.type = ADDR_NONE;
+    }
+    
+  for(j=0;j<loopLimit;j++) {
+    if((memcmp(idmanager_getMyID(ADDR_64B),runningPointer+(j*octetsAddressSize),octetsAddressSize))==0)
+    {
+      // if found print the next address to be the next hop
+ 
+      //check if it's loopLimit -2 then it means, the last address will be taken as next hop.
+      if(j!=loopLimit-2)
+      {
+      memcpy(&(msg->l2_nextORpreviousHop),(runningPointer+(j+1)*octetsAddressSize),octetsAddressSize);
+      }
+      else
+      {
+          runningPointer=runningPointer+((j+1)*octetsAddressSize);
+          
+          if(local_CmprE==0)
+            {
+              msg->l2_nextORpreviousHop.type = ADDR_16B;
+              octetsAddressSize=2;
+            }
+           else if(local_CmprE==8)
+            {
+               msg->l2_nextORpreviousHop.type = ADDR_64B;
+               octetsAddressSize=8;
+            }
+           else if(local_CmprE==2)
+            {
+              msg->l2_nextORpreviousHop.type = ADDR_128B;
+              octetsAddressSize=16;
+            }
+            else
+            {
+              msg->l2_nextORpreviousHop.type = ADDR_NONE;
+            }
+          
+             memcpy(&(msg->l2_nextORpreviousHop),runningPointer,octetsAddressSize);
+       
+        
+      }
+      // SegmentsLeft to be decremented each time u forward
+     (((ipv6_Source_Routing_Header_t*)(msg->payload))->SegmentsLeft)--;
+      foundFlag=1;
+      break;
+    }
+    
+  }
+  if(foundFlag==0)
+  {
+    while(1); // it shouldn't access this, my address was not found in the route.
+  }
+    
+  }
+  
+  // getNextHop(&(msg->l3_destinationORsource),&(msg->l2_nextORpreviousHop));
    if (msg->l2_nextORpreviousHop.type==ADDR_NONE) {
       openserial_printError(COMPONENT_FORWARDING,ERR_NO_NEXTHOP,
                             (errorparameter_t)0,

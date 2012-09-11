@@ -195,7 +195,8 @@ void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, error_t error) {
 
 void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
   uint8_t codeValue= (((ICMPv6_ht*)(msg->payload))->code);
-  open_addr_t temp_prefix;
+  open_addr_t* temp_prefix;
+  uint8_t j;
   msg->owner = COMPONENT_ICMPv6RPL;
    
    //toss ICMPv6 header
@@ -220,7 +221,17 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
      memcpy(  &(icmpv6rpl_dao.DODAGID[0]),
                   &(((icmpv6rpl_dio_t*)(msg->payload))->DODAGID[0]),
                   sizeof(icmpv6rpl_dao.DODAGID));
+     // now to set the prefix
+   // idmanager_setMyID(&(((icmpv6rpl_dio_t*)(msg->payload))->DODAGID[0])); 
+    temp_prefix=idmanager_getMyID(ADDR_PREFIX);
+   
+    for(j=0;j<sizeof(temp_prefix->prefix);j++) {
+    temp_prefix->prefix[j]=(((icmpv6rpl_dio_t*)(msg->payload))->DODAGID[j]);
       
+    }
+   
+    
+     
    //}
    // check if the DIO option is included.
    if(((icmpv6rpl_dio_t*)(msg->payload))->options   == 0x03 )
@@ -228,15 +239,19 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
      if(isPrefixSet()==FALSE)
       {
          packetfunctions_tossHeader(msg,sizeof(icmpv6rpl_dio_t));
-         temp_prefix.type = ADDR_PREFIX;
-         memcpy(  &(temp_prefix),
-                  &(((icmpv6rpl_dio_options_t*)(msg->payload))->prefix),
-                  sizeof(open_addr_t));
+         temp_prefix=&(((icmpv6rpl_dio_options_t*)(msg->payload))->prefix);
+         temp_prefix->type=ADDR_PREFIX;
+         idmanager_setMyID(temp_prefix);
+        // temp_prefix.type = ADDR_PREFIX;
+//         memcpy(  &(temp_prefix),
+//                  &(((icmpv6rpl_dio_options_t*)(msg->payload))->prefix),
+//                  sizeof(open_addr_t));
+         
       //   memcpy(  &(temp_prefix.prefix[0]),
       //            (((icmpv6rpl_dio_options_t*)(msg->payload))->prefix[0]),
       //            8);
          
-            idmanager_setMyID(&temp_prefix);
+//         idmanager_setMyID(&temp_prefix);
          //packetfunctions_tossHeader(msg,sizeof(icmpv6rpl_dio_options_t));
       }
      }

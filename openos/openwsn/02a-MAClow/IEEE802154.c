@@ -28,7 +28,7 @@ void ieee802154_prependHeader(OpenQueueEntry_t* msg,
       *((uint8_t*)(msg->payload)) = 0xFF;
    } else {
       // poipoi: using 16-bit destination address
-      packetfunctions_reserveHeaderSize(msg,sizeof(uint8_t));
+    /*  packetfunctions_reserveHeaderSize(msg,sizeof(uint8_t));
       *((uint8_t*)(msg->payload)) = nextHop->addr_64b[6];
       packetfunctions_reserveHeaderSize(msg,sizeof(uint8_t));
       *((uint8_t*)(msg->payload)) = nextHop->addr_64b[7];
