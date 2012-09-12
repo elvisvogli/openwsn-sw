@@ -120,6 +120,7 @@ void iphc_receive(OpenQueueEntry_t* msg) {
       packetfunctions_tossHeader(msg,ipv6_header.header_length);
       forwarding_receive(msg,ipv6_header);       //up the internal stack
    } else {
+      ipv6_header = retrieveIPv6Header(msg);
       openbridge_receive(msg);                   //out to the OpenVisualizer
    }
 }

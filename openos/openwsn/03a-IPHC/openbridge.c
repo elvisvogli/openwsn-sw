@@ -70,7 +70,7 @@ void openbridge_receive(OpenQueueEntry_t* msg) {
    memcpy(msg->payload,idmanager_getMyID(ADDR_64B)->addr_64b,size);
   
   
-   openserial_printData((uint8_t*)(msg->payload),msg->length +total);
+   openserial_printData((uint8_t*)(msg->payload),msg->length);
    openqueue_freePacketBuffer(msg);
 }
 
