@@ -522,14 +522,14 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
             
             
             // below to enforce the routing as follow: 0x9D ==> //0xE2 ==> 0xE4 ==> 0xA1
-               switch ((idmanager_getMyID(ADDR_64B))->addr_64b[7]) {
-               case 0xEE:
-               if (neighbors_vars.neighbors[i].addr_64b.addr_64b[7]==0xED) {
-               neighbors_vars.myDAGrank=neighbors_vars.neighbors[i].DAGrank+temp_linkCost;
-               temp_preferredParentExists=TRUE;
-               temp_preferredParentRow=i;
-               }
-               break;
+//               switch ((idmanager_getMyID(ADDR_64B))->addr_64b[7]) {
+//               case 0xEE:
+//               if (neighbors_vars.neighbors[i].addr_64b.addr_64b[7]==0xEC) {
+//               neighbors_vars.myDAGrank=neighbors_vars.neighbors[i].DAGrank+temp_linkCost;
+//               temp_preferredParentExists=TRUE;
+//               temp_preferredParentRow=i;
+//               }
+//               break;
 //               case 0xEC:
 //               if (neighbors_vars.neighbors[i].addr_64b.addr_64b[7]==0xE8) {
 //               neighbors_vars.myDAGrank=neighbors_vars.neighbors[i].DAGrank+temp_linkCost;
@@ -544,9 +544,9 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
 //               temp_preferredParentRow=i;
 //               }
 //               break;
-               default:
-               break;
-               }
+//               default:
+//               break;
+//               }
                
          }
          i++;

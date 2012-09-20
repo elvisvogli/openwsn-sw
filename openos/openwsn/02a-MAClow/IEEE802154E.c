@@ -1394,10 +1394,17 @@ port_INLINE void activity_ri9(PORT_TIMER_WIDTH capturedTime) {
 \returns TRUE if packet is a valid ADV, FALSE otherwise
 */
 port_INLINE bool isValidAdv(ieee802154_header_iht* ieee802514_header) {
-   return ieee802514_header->valid==TRUE                                                              && \
-          ieee802514_header->frameType==IEEE154_TYPE_BEACON                                           && \
-          packetfunctions_sameAddress(&ieee802514_header->panid,idmanager_getMyID(ADDR_PANID))        && \
-          ieee154e_vars.dataReceived->length==ADV_PAYLOAD_LENGTH;
+  bool a,b,c,d,w;
+  a=(ieee802514_header->frameType==IEEE154_TYPE_BEACON);
+  b=packetfunctions_sameAddress(&ieee802514_header->panid,idmanager_getMyID(ADDR_PANID));
+  c=(ieee154e_vars.dataReceived->length==ADV_PAYLOAD_LENGTH);
+  d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xEA);
+  w=((ieee802514_header->valid==TRUE)&& a && b && c && d);
+  return w;
+//   return ieee802514_header->valid==TRUE                                                              && \
+//          ieee802514_header->frameType==IEEE154_TYPE_BEACON                                           && \
+//          packetfunctions_sameAddress(&ieee802514_header->panid,idmanager_getMyID(ADDR_PANID))        && \
+//          ieee154e_vars.dataReceived->length==ADV_PAYLOAD_LENGTH;
 }
 
 /**
@@ -1415,16 +1422,31 @@ A valid Rx frame satisfies the following constraints:
 \returns TRUE if packet is valid received frame, FALSE otherwise
 */
 port_INLINE bool isValidRxFrame(ieee802154_header_iht* ieee802514_header) {
-   return ieee802514_header->valid==TRUE                                                           && \
-          (
-             ieee802514_header->frameType==IEEE154_TYPE_DATA                   ||
-             ieee802514_header->frameType==IEEE154_TYPE_BEACON
-          )                                                                                        && \
-          packetfunctions_sameAddress(&ieee802514_header->panid,idmanager_getMyID(ADDR_PANID))     && \
-          (
-             idmanager_isMyAddress(&ieee802514_header->dest)                   ||
-             packetfunctions_isBroadcastMulticast(&ieee802514_header->dest)
-          );
+  bool a,b,c,d,w;
+  a=(ieee802514_header->frameType==IEEE154_TYPE_DATA || ieee802514_header->frameType==IEEE154_TYPE_BEACON);
+  b= packetfunctions_sameAddress(&ieee802514_header->panid,idmanager_getMyID(ADDR_PANID));
+  c= (idmanager_isMyAddress(&ieee802514_header->dest) || packetfunctions_isBroadcastMulticast(&ieee802514_header->dest));
+  //d= ((ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xE8) || (ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xE6));
+  d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xE8);
+  
+  w= ((ieee802514_header->valid==TRUE) && a && b && c && d);
+  return w;
+ // return (ieee802514_header->valid==TRUE) && a && b && c && d;
+  
+//  return ieee802514_header->valid==TRUE                                                           && \
+//          (
+//             ieee802514_header->frameType==IEEE154_TYPE_DATA                   ||
+//             ieee802514_header->frameType==IEEE154_TYPE_BEACON
+//          )                                                                                        && \
+//          packetfunctions_sameAddress(&ieee802514_header->panid,idmanager_getMyID(ADDR_PANID))     && \
+//            (
+//             idmanager_isMyAddress(&ieee802514_header->dest)                   ||
+//             packetfunctions_isBroadcastMulticast(&ieee802514_header->dest)
+//          )                                                                                       && \
+            //(ieee154e_vars.ackReceived->l2_nextORpreviousHop.addr_64b[7] == 0xE8) ;  
+//           ((ieee154e_vars.ackReceived->l2_nextORpreviousHop.addr_64b[7] == 0xED) || (ieee154e_vars.ackReceived->l2_nextORpreviousHop.addr_64b[7] == 0xEC));
+          //((ieee802514_header->src.addr_64b[6]==0x00 &&  ieee802514_header->src.addr_64b[7]==0xEC)) || packetfunctions_isBroadcastMulticast(&ieee802514_header->dest);  
+         // ((ieee802514_header->src.addr_64b[6]==0x00 &&  ieee802514_header->src.addr_64b[7]==0xEC)) || (ieee802514_header->src.addr_64b[6]==0x00 &&  ieee802514_header->src.addr_64b[7]==0xED) || packetfunctions_isBroadcastMulticast(&ieee802514_header->dest);
 }
 
 /**

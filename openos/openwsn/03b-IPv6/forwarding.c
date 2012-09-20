@@ -133,30 +133,30 @@ error_t fowarding_send_internal_SourceRouting(OpenQueueEntry_t *msg, ipv6_header
   // getting local_CmprE and CmprI;
   local_CmprE= ((((ipv6_Source_Routing_Header_t*)(msg->payload))->CmprICmprE) & 0xf);
   local_CmprI=((((ipv6_Source_Routing_Header_t*)(msg->payload))->CmprICmprE) & 0xf0);
-  local_CmprI>>4; // shifting it by 4.
+  //local_CmprI>>4; // shifting it by 4.
+  local_CmprI=local_CmprI/16; // shifting it by 4.
   foundFlag=0;
   
   runningPointer+=sizeof(ipv6_Source_Routing_Header_t);
   
   // tossing the header 
  // packetfunctions_tossHeader(msg,sizeof(ipv6_Source_Routing_Header_t));
-  if(local_CmprI !=0)
-  {
+  
     if(local_CmprI==2)
     {
       octetsAddressSize=2;
        msg->l2_nextORpreviousHop.type = ADDR_16B;
        if(local_CmprE==0)
             {
-              loopLimit= (((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-8;
+              loopLimit= ((((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-16)/octetsAddressSize;
             }
        else if(local_CmprE==2)
              {
-               loopLimit= (((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-1;
+               loopLimit= ((((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-2)/octetsAddressSize;
              }
        else if(local_CmprE==8)
             {
-              loopLimit= (((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-4;
+              loopLimit= ((((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-8)/octetsAddressSize;
             }
        else
            {
@@ -171,12 +171,16 @@ error_t fowarding_send_internal_SourceRouting(OpenQueueEntry_t *msg, ipv6_header
       msg->l2_nextORpreviousHop.type = ADDR_64B;
            if(local_CmprE==0)
             {
-              loopLimit= (((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-2;
+              loopLimit= ((((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-16)/octetsAddressSize;
             }
            else if(local_CmprE==8)
             {
-              loopLimit= (((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-1;
+              loopLimit= ((((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-8)/octetsAddressSize;
             }
+          else if(local_CmprE==2)
+          {
+            loopLimit= ((((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-2)/octetsAddressSize;
+          }
            else
            {
              // compiler shouldn't access this !
@@ -186,9 +190,25 @@ error_t fowarding_send_internal_SourceRouting(OpenQueueEntry_t *msg, ipv6_header
     }
     else if(local_CmprI==0)
     {
-      octetsAddressSize=16;
-      msg->l2_nextORpreviousHop.type = ADDR_128B;
-      loopLimit= (((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-1;
+          octetsAddressSize=16;
+          msg->l2_nextORpreviousHop.type = ADDR_128B;
+            if(local_CmprE==0)
+           {
+            loopLimit= ((((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-16)/octetsAddressSize;
+           }
+            else if(local_CmprE==8)
+            {
+              loopLimit= ((((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-8)/octetsAddressSize;
+            }
+          else if(local_CmprE==2)
+          {
+            loopLimit= ((((ipv6_Source_Routing_Header_t*)(msg->payload))->HdrExtLen)-2)/octetsAddressSize;
+          }
+           else
+           {
+             // compiler shouldn't access this !
+             msg->l2_nextORpreviousHop.type = ADDR_NONE;
+           }
     }
     else
     {
@@ -196,13 +216,14 @@ error_t fowarding_send_internal_SourceRouting(OpenQueueEntry_t *msg, ipv6_header
         msg->l2_nextORpreviousHop.type = ADDR_NONE;
     }
     
+    
   for(j=0;j<loopLimit;j++) {
-    if((memcmp(idmanager_getMyID(ADDR_64B),runningPointer+(j*octetsAddressSize),octetsAddressSize))==0)
+    if((memcmp(idmanager_getMyID((msg->l2_nextORpreviousHop.type)),runningPointer+(j*octetsAddressSize),octetsAddressSize))==0)
     {
       // if found print the next address to be the next hop
  
       //check if it's loopLimit -2 then it means, the last address will be taken as next hop.
-      if(j!=loopLimit-2)
+      if(j!=loopLimit-1)
       {
       memcpy(&(msg->l2_nextORpreviousHop),(runningPointer+(j+1)*octetsAddressSize),octetsAddressSize);
       }
@@ -246,7 +267,7 @@ error_t fowarding_send_internal_SourceRouting(OpenQueueEntry_t *msg, ipv6_header
     while(1); // it shouldn't access this, my address was not found in the route.
   }
     
-  }
+  
   
   // getNextHop(&(msg->l3_destinationORsource),&(msg->l2_nextORpreviousHop));
    if (msg->l2_nextORpreviousHop.type==ADDR_NONE) {
