@@ -1398,7 +1398,22 @@ port_INLINE bool isValidAdv(ieee802154_header_iht* ieee802514_header) {
   a=(ieee802514_header->frameType==IEEE154_TYPE_BEACON);
   b=packetfunctions_sameAddress(&ieee802514_header->panid,idmanager_getMyID(ADDR_PANID));
   c=(ieee154e_vars.dataReceived->length==ADV_PAYLOAD_LENGTH);
-  d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xEA);
+  if(ieee154e_vars.dataReceived->l2_nextORpreviousHop.type== ADDR_16B)
+  {
+    d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_16b[1] == 0xED);
+  }
+  else if(ieee154e_vars.dataReceived->l2_nextORpreviousHop.type== ADDR_64B)
+  {
+    d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xED);
+  }
+  else if(ieee154e_vars.dataReceived->l2_nextORpreviousHop.type== ADDR_128B)
+  {
+    d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_128b[15] == 0xED);
+  } 
+  else
+  {
+    // it shouldn't access it
+  } 
   w=((ieee802514_header->valid==TRUE)&& a && b && c && d);
   return w;
 //   return ieee802514_header->valid==TRUE                                                              && \
@@ -1426,8 +1441,26 @@ port_INLINE bool isValidRxFrame(ieee802154_header_iht* ieee802514_header) {
   a=(ieee802514_header->frameType==IEEE154_TYPE_DATA || ieee802514_header->frameType==IEEE154_TYPE_BEACON);
   b= packetfunctions_sameAddress(&ieee802514_header->panid,idmanager_getMyID(ADDR_PANID));
   c= (idmanager_isMyAddress(&ieee802514_header->dest) || packetfunctions_isBroadcastMulticast(&ieee802514_header->dest));
-  //d= ((ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xE8) || (ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xE6));
-  d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xE8);
+  if(ieee154e_vars.dataReceived->l2_nextORpreviousHop.type== ADDR_16B)
+  {
+     //d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_16b[1] == 0xE8);
+    d= ((ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_16b[1] == 0xED) || (ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_16b[1] == 0xEC));
+  }
+  else if(ieee154e_vars.dataReceived->l2_nextORpreviousHop.type== ADDR_64B)
+  {
+   //d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xE8);
+   d= ((ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xED) || (ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xEC));
+  }
+  else if(ieee154e_vars.dataReceived->l2_nextORpreviousHop.type== ADDR_128B)
+  {
+   //d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_128b[15] == 0xE8);
+   d= ((ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_128b[15] == 0xED) || (ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_128b[15] == 0xEC)); 
+  } 
+  else
+  {
+    // it shouldn't access it
+  } 
+  
   
   w= ((ieee802514_header->valid==TRUE) && a && b && c && d);
   return w;
@@ -1442,7 +1475,7 @@ port_INLINE bool isValidRxFrame(ieee802154_header_iht* ieee802514_header) {
 //            (
 //             idmanager_isMyAddress(&ieee802514_header->dest)                   ||
 //             packetfunctions_isBroadcastMulticast(&ieee802514_header->dest)
-//          )                                                                                       && \
+//          );      //                                                                                 && \
             //(ieee154e_vars.ackReceived->l2_nextORpreviousHop.addr_64b[7] == 0xE8) ;  
 //           ((ieee154e_vars.ackReceived->l2_nextORpreviousHop.addr_64b[7] == 0xED) || (ieee154e_vars.ackReceived->l2_nextORpreviousHop.addr_64b[7] == 0xEC));
           //((ieee802514_header->src.addr_64b[6]==0x00 &&  ieee802514_header->src.addr_64b[7]==0xEC)) || packetfunctions_isBroadcastMulticast(&ieee802514_header->dest);  

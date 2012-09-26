@@ -286,6 +286,8 @@ typedef struct {
    bool          l1_crc;                         // did received packet pass CRC check?
    //the packet
    uint8_t       packet[1+1+125+2+1];            // 1B spi address, 1B length, 125B data, 2B CRC, 1B LQI
+   // below has been added to be used for the multi-hop network  diodio
+   open_addr_t   l3_SourceAdd;
 } OpenQueueEntry_t;
 
 //=========================== variables =======================================

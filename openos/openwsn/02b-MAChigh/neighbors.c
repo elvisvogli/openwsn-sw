@@ -398,7 +398,7 @@ void getNeighborsWithLowerDAGrank(uint8_t* addressToWrite,uint8_t addr_type, uin
 void registerNewNeighbor(open_addr_t* address,
                          int8_t       rssi,
                          asn_t*       asnTimestamp) {
-   uint8_t  i,j;
+   uint8_t  i,j,k;
    bool     iHaveAPreferedParent;
    // filter errors
    if (address->type!=ADDR_64B) {
@@ -435,6 +435,12 @@ void registerNewNeighbor(open_addr_t* address,
             }
             // if I have none, and I'm not DAGroot, the new neighbor is my preferred
             if (iHaveAPreferedParent==FALSE && idmanager_getIsDAGroot()==FALSE) {
+              
+               if(address->addr_64b[7]==0xEC)
+                {
+                  k=2;
+                }
+              
                neighbors_vars.neighbors[i].parentPreference     = MAXPREFERENCE;
             }
             break;
@@ -497,7 +503,7 @@ bool isThisRowMatching(open_addr_t* address, uint8_t rowNumber) {
 void neighbors_updateMyDAGrankAndNeighborPreference() {
    uint8_t   i;
    uint8_t   temp_linkCost;
-   uint32_t  temp_myTentativeDAGrank; //has to be 16bit so that the sum can be larger than 255 "CHANGE BY Ahmad to 32 bits since the DAGrank is 16 bits now", so the sum will be >(0xFFFF)
+   uint32_t  temp_myTentativeDAGrank; //has to be 16bit so that the sum can be larger than 255 "CHANGED BY Ahmad to be 32 bits since the DAGrank is 16 bits now", so the sum will be >(0xFFFF)
    uint8_t   temp_preferredParentRow=0;
    bool      temp_preferredParentExists=FALSE;
    if ((idmanager_getIsDAGroot())==FALSE) {

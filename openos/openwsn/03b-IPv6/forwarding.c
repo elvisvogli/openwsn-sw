@@ -15,7 +15,7 @@
 //=========================== prototypes ======================================
 
 void    getNextHop(open_addr_t* destination, open_addr_t* addressToWrite);
-error_t fowarding_send_internal(OpenQueueEntry_t *msg);
+error_t fowarding_send_internal(OpenQueueEntry_t *msg, uint8_t fw_SendOrfw_Rcv); //>>>>>> diodio
 error_t fowarding_send_internal_SourceRouting(OpenQueueEntry_t *msg, ipv6_header_iht ipv6_header);
 
 //=========================== public ==========================================
@@ -23,9 +23,9 @@ error_t fowarding_send_internal_SourceRouting(OpenQueueEntry_t *msg, ipv6_header
 void forwarding_init() {
 }
 
-error_t forwarding_send(OpenQueueEntry_t *msg) {
-   msg->owner = COMPONENT_FORWARDING;
-   return fowarding_send_internal(msg);
+error_t forwarding_send(OpenQueueEntry_t *msg) { 
+  msg->owner = COMPONENT_FORWARDING; 
+   return fowarding_send_internal(msg,PCKTSEND);
 }
 
 void forwarding_sendDone(OpenQueueEntry_t* msg, error_t error) {
@@ -76,13 +76,14 @@ void forwarding_receive(OpenQueueEntry_t* msg, ipv6_header_iht ipv6_header) {
       }
    } else { //relay
       memcpy(&(msg->l3_destinationORsource),&ipv6_header.dest,sizeof(open_addr_t));//because initially contains source
-      //TBC: source address gets changed!
+      memcpy(&(msg->l3_SourceAdd),&ipv6_header.src,sizeof(open_addr_t));  //>>>>>> diodio
+       //TBC: source address gets changed!
       // change the creator to this components (should have been MAC)
       msg->creator = COMPONENT_FORWARDING;
-      if(ipv6_header.next_header !=SourceFWNxtHdr) // no numbers define it >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> NEED TO DEFINE (define SourceFWNxtHdr)
+      if(ipv6_header.next_header !=SourceFWNxtHdr) 
       {
-          // resend as if from upper layer
-          if (fowarding_send_internal(msg)==E_FAIL) {
+          // resend as if from upper layer        //>>>>>> diodio
+          if (fowarding_send_internal(msg,PCKTFORWARD)==E_FAIL) {
              openqueue_freePacketBuffer(msg);
           }
       }
@@ -98,7 +99,7 @@ void forwarding_receive(OpenQueueEntry_t* msg, ipv6_header_iht ipv6_header) {
 
 //=========================== private =========================================
 
-error_t fowarding_send_internal(OpenQueueEntry_t *msg) {
+error_t fowarding_send_internal(OpenQueueEntry_t *msg, uint8_t fw_SendOrfw_Rcv) {
    getNextHop(&(msg->l3_destinationORsource),&(msg->l2_nextORpreviousHop));
    if (msg->l2_nextORpreviousHop.type==ADDR_NONE) {
       openserial_printError(COMPONENT_FORWARDING,ERR_NO_NEXTHOP,
@@ -106,7 +107,7 @@ error_t fowarding_send_internal(OpenQueueEntry_t *msg) {
                             (errorparameter_t)0);
       return E_FAIL;
    }
-   return iphc_sendFromForwarding(msg);
+   return iphc_sendFromForwarding(msg,fw_SendOrfw_Rcv);
 }
 
 error_t fowarding_send_internal_SourceRouting(OpenQueueEntry_t *msg, ipv6_header_iht ipv6_header) {
@@ -276,7 +277,7 @@ error_t fowarding_send_internal_SourceRouting(OpenQueueEntry_t *msg, ipv6_header
                             (errorparameter_t)0);
       return E_FAIL;
    }
-   return iphc_sendFromForwarding(msg);
+   return iphc_sendFromForwarding(msg,PCKTFORWARD);
 }
 
 void getNextHop(open_addr_t* destination128b, open_addr_t* addressToWrite64b) {
