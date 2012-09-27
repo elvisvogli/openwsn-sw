@@ -398,7 +398,7 @@ void getNeighborsWithLowerDAGrank(uint8_t* addressToWrite,uint8_t addr_type, uin
 void registerNewNeighbor(open_addr_t* address,
                          int8_t       rssi,
                          asn_t*       asnTimestamp) {
-   uint8_t  i,j,k;
+   uint8_t  i,j;
    bool     iHaveAPreferedParent;
    // filter errors
    if (address->type!=ADDR_64B) {
@@ -434,13 +434,7 @@ void registerNewNeighbor(open_addr_t* address,
                }
             }
             // if I have none, and I'm not DAGroot, the new neighbor is my preferred
-            if (iHaveAPreferedParent==FALSE && idmanager_getIsDAGroot()==FALSE) {
-              
-               if(address->addr_64b[7]==0xEC)
-                {
-                  k=2;
-                }
-              
+            if (iHaveAPreferedParent==FALSE && idmanager_getIsDAGroot()==FALSE) {      
                neighbors_vars.neighbors[i].parentPreference     = MAXPREFERENCE;
             }
             break;
@@ -522,6 +516,7 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
                neighbors_vars.myDAGrank=temp_myTentativeDAGrank;
                temp_preferredParentExists=TRUE;
                temp_preferredParentRow=i;
+               break;     // bug has been fixed, it has to break here before adding i++ for next round   //>>>>>> diodio
             }
             //the following is equivalent to manual routing
             neighbors_vars.testing=(idmanager_getMyID(ADDR_64B))->addr_64b[7];

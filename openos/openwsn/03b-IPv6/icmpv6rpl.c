@@ -231,6 +231,8 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
         //dodagid is big endian
         temp_prefix->prefix[j]=(((icmpv6rpl_dio_t*)(msg->payload))->DODAGID[j]);   
       }
+       temp_prefix->type=ADDR_PREFIX;
+       idmanager_setMyID(temp_prefix);
       
       
       // check if the DIO option is included.
