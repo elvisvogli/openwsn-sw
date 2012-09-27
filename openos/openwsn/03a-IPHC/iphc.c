@@ -208,7 +208,7 @@ error_t prependIPv6Header(OpenQueueEntry_t* msg,
         {
             if (value_src->type!=ADDR_16B) {
                 openserial_printError(COMPONENT_IPHC,ERR_WRONG_ADDR_TYPE,
-                                      (errorparameter_t)value_dest->type,
+                                      (errorparameter_t)value_src->type,
                                       (errorparameter_t)0);
                 return E_FAIL;
              };                              //>>>>>> diodio
@@ -224,7 +224,7 @@ error_t prependIPv6Header(OpenQueueEntry_t* msg,
         {
             if (value_src->type!=ADDR_64B) {
                 openserial_printError(COMPONENT_IPHC,ERR_WRONG_ADDR_TYPE,
-                                      (errorparameter_t)value_dest->type,
+                                      (errorparameter_t)value_src->type,
                                       (errorparameter_t)1);
                 return E_FAIL;
              };                          //>>>>>> diodio
@@ -232,22 +232,21 @@ error_t prependIPv6Header(OpenQueueEntry_t* msg,
         }
          break;
       case IPHC_SAM_128B:
-         if(fw_SendOrfw_Rcv==PCKTSEND)
+        if(fw_SendOrfw_Rcv==PCKTSEND)
         {
          packetfunctions_writeAddress(msg, (idmanager_getMyID(ADDR_64B)),BIG_ENDIAN);
          packetfunctions_writeAddress(msg, (idmanager_getMyID(ADDR_PREFIX)),BIG_ENDIAN);
         }
         if(fw_SendOrfw_Rcv==PCKTFORWARD)
         {
-            if (value_dest->type!=ADDR_128B) {
+            if (value_src->type!=ADDR_128B) {
                 openserial_printError(COMPONENT_IPHC,ERR_WRONG_ADDR_TYPE,
-                                      (errorparameter_t)value_dest->type,
+                                      (errorparameter_t)value_src->type,
                                       (errorparameter_t)2);
                 return E_FAIL;
              };                     //>>>>>> diodio
              packetfunctions_writeAddress(msg,value_src,BIG_ENDIAN);
         }
-         //packetfunctions_writeAddress(msg, (idmanager_getMyID(ADDR_PREFIX)),BIG_ENDIAN);
          break;
       default:
          openserial_printError(COMPONENT_IPHC,ERR_6LOWPAN_UNSUPPORTED,
