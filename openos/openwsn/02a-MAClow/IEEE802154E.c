@@ -1400,15 +1400,15 @@ port_INLINE bool isValidAdv(ieee802154_header_iht* ieee802514_header) {
   c=(ieee154e_vars.dataReceived->length==ADV_PAYLOAD_LENGTH);
   if(ieee154e_vars.dataReceived->l2_nextORpreviousHop.type== ADDR_16B)
   {
-    d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_16b[1] == 0xEC);
+    d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_16b[1] == 0xED);
   }
   else if(ieee154e_vars.dataReceived->l2_nextORpreviousHop.type== ADDR_64B)
   {
-    d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xEC);
+    d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xED);
   }
   else if(ieee154e_vars.dataReceived->l2_nextORpreviousHop.type== ADDR_128B)
   {
-    d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_128b[15] == 0xEC);
+    d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_128b[15] == 0xED);
   } 
   else
   {
@@ -1443,18 +1443,18 @@ port_INLINE bool isValidRxFrame(ieee802154_header_iht* ieee802514_header) {
   c= (idmanager_isMyAddress(&ieee802514_header->dest) || packetfunctions_isBroadcastMulticast(&ieee802514_header->dest));
   if(ieee154e_vars.dataReceived->l2_nextORpreviousHop.type== ADDR_16B)
   {
-     d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_16b[1] == 0xEC);
-    //d= ((ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_16b[1] == 0xE6) || (ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_16b[1] == 0xE8));
+    // d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_16b[1] == 0xE8);
+    d= ((ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_16b[1] == 0xEC) || (ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_16b[1] == 0xED));
   }
   else if(ieee154e_vars.dataReceived->l2_nextORpreviousHop.type== ADDR_64B)
   {
-   d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xEC);
-   //d= ((ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xE6) || (ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xE8));
+   //d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xE8);
+   d= ((ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xEC) || (ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_64b[7] == 0xED));
   }
   else if(ieee154e_vars.dataReceived->l2_nextORpreviousHop.type== ADDR_128B)
   {
-   d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_128b[15] == 0xEC);
-   //d= ((ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_128b[15] == 0xE6) || (ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_128b[15] == 0xE8)); 
+   //d=(ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_128b[15] == 0xE8);
+   d= ((ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_128b[15] == 0xEC) || (ieee154e_vars.dataReceived->l2_nextORpreviousHop.addr_128b[15] == 0xED)); 
   } 
   else
   {
