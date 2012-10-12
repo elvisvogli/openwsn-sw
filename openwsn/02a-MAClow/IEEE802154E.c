@@ -1630,10 +1630,10 @@ different channel offsets in the same slot.
 */
 port_INLINE uint8_t calculateFrequency(uint8_t channelOffset) {
    // poipoi: no channel hopping
-   // return 26;    
+   return 26;    
    //return 11+(ieee154e_vars.asnOffset+channelOffset)%16; //channel hopping
-   uint8_t temp = 11+(ieee154e_vars.asnOffset+channelOffset)%16;
-   return temp;
+   //uint8_t temp = 11+(ieee154e_vars.asnOffset+channelOffset)%16;
+   //return temp;
 }
 
 /**

@@ -7,6 +7,7 @@
 //=========================== variables =======================================
 
 //=========================== prototypes ======================================
+void    ieee802154_prependAuxHeader(OpenQueueEntry_t* msg);
 
 //=========================== public ==========================================
 
@@ -16,6 +17,13 @@ void ieee802154_prependHeader(OpenQueueEntry_t* msg,
                               uint8_t           sequenceNumber,
                               open_addr_t*      nextHop) {
    uint8_t temp_8b;
+   
+   
+   //Auxilary Security Header 2B
+   if (securityEnabled) {
+        ieee802154_prependAuxHeader(msg);
+   } 
+   
    //previousHop address (always 64-bit)
    //packetfunctions_writeAddress(msg,idmanager_getMyID(ADDR_64B),LITTLE_ENDIAN);
    // poipoi: using 16-bit source address
@@ -52,9 +60,12 @@ void ieee802154_prependHeader(OpenQueueEntry_t* msg,
    *((uint8_t*)(msg->payload)) = sequenceNumber;
    //fcf (2nd byte)
    temp_8b              = 0;
-   // poipoi: 16-bit source/dest addresses
-   temp_8b             |= IEEE154_ADDR_SHORT              << IEEE154_FCF_DEST_ADDR_MODE;
-   temp_8b             |= IEEE154_ADDR_SHORT              << IEEE154_FCF_SRC_ADDR_MODE;
+   // poipoi: 16-bit source/dest addresses                                                                                            
+                                                                                                //bit8 Seq
+                                                                                                //bit9, IE
+   temp_8b             |= IEEE154_ADDR_SHORT              << IEEE154_FCF_DEST_ADDR_MODE;        //bit10..11
+                                                                                                //bit12..13 Frame version
+   temp_8b             |= IEEE154_ADDR_SHORT              << IEEE154_FCF_SRC_ADDR_MODE;         //bit14..15
    /*
    if (packetfunctions_isBroadcastMulticast(nextHop)) {
       temp_8b          |= IEEE154_ADDR_SHORT              << IEEE154_FCF_DEST_ADDR_MODE;
@@ -225,3 +236,22 @@ void ieee802154_retrieveHeader(OpenQueueEntry_t*      msg,
 }
 
 //=========================== private =========================================
+void ieee802154_prependAuxHeader(OpenQueueEntry_t* msg) {
+    uint8_t      temp_8b;
+   
+    //2nd byte, Key identifier 
+   packetfunctions_reserveHeaderSize(msg,sizeof(uint8_t));
+   *((uint8_t*)(msg->payload)) = INTIAL_KEY_ID;                         //INITIAL_KEY_ID =0x07
+   
+   //1st byte, security control
+   temp_8b       = 0;
+   temp_8b      |= IEEE154_SECURITY_LEVEL_32MIC              << IEEE154_AUX_SECURITY_LEVEL;            //b0..2 secuity level =01-32bitMIC   
+   temp_8b      |= IEEE154_KEY_FROM_INDEX                    << IEEE154_AUX_KEY_ID_MODE;               //b3-b4 key identifier mode =01- key is determined from 1B key index
+   temp_8b      |= IEEE154_COUNTER_SUPPRESSION_YES           << IEEE154_AUX_FRAME_COUNTER_SUPPRESSION; //b5 frame counter suppression, =1-no frame counter is sent
+   temp_8b      |= IEEE154_COUNTER_SIZE_5B                   << IEEE154_AUX_FRAME_COUNTER_SIZE;        //b6 frame counter size =1 - frame counter is 5B
+                                                                                              //b7 reserved =0
+   
+   packetfunctions_reserveHeaderSize(msg,sizeof(uint8_t));
+   *((uint8_t*)(msg->payload)) = temp_8b;
+   
+}
