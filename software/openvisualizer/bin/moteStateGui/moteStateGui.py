@@ -199,6 +199,7 @@ logHandler = logging.handlers.RotatingFileHandler('moteStateGui.log',
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
 for loggerName in ['moteProbeUtils',
                    'moteProbe',
+                   'moteProbeSerialThread',
                    'moteConnector',
                    'OpenParser',
                    'Parser',
